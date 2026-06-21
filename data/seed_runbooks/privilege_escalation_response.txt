@@ -1,0 +1,24 @@
+Privilege Escalation Response Runbook
+
+Summary
+Privilege escalation occurs when an attacker gains rights beyond those initially granted, moving from a standard user to root/administrator or to higher-privileged service accounts. Vectors include kernel exploits, misconfigured sudo, SUID binaries, weak file permissions, token theft, and abuse of cloud IAM roles. Escalation typically precedes persistence and lateral movement.
+
+Detection
+1. Alert on unexpected use of privileged commands: sudo to root by unusual users, su attempts, creation of new admin/sudoers entries, and changes to /etc/sudoers or local Administrators group.
+2. Watch for execution of known exploit tooling, abnormal SUID/SETUID binary use, and processes spawning shells with elevated tokens.
+3. In cloud, alert on IAM policy changes, AssumeRole anomalies, and attachment of high-privilege policies to users or roles.
+
+Containment
+1. Suspend the implicated account(s) and revoke active sessions and tokens; in cloud, detach the abused role/policy.
+2. Isolate the affected host via EDR or network quarantine to prevent lateral movement.
+3. Block any attacker-controlled persistence (cron jobs, systemd units, scheduled tasks, new SSH keys).
+
+Eradication and Remediation
+1. Patch the exploited vulnerability (kernel, service, or misconfiguration) and remove unnecessary SUID bits.
+2. Enforce least privilege: tighten sudoers, remove standing admin rights, and adopt just-in-time elevation.
+3. Rotate credentials and secrets accessible from the compromised context, including service accounts and cloud keys.
+
+Recovery and Post-Incident
+1. Rebuild compromised hosts from trusted images where root access was achieved.
+2. Review audit logs to scope the full extent of access and identify any data accessed.
+3. Add detections for the specific escalation technique (mapped to MITRE ATT&CK) and validate with a follow-up access review.

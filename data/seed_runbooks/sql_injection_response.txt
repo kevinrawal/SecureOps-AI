@@ -1,0 +1,24 @@
+SQL Injection Response Runbook
+
+Summary
+SQL injection (SQLi) occurs when untrusted input is concatenated into a SQL query, allowing an attacker to alter query logic. Impact ranges from authentication bypass and data exfiltration to full database compromise and, in some cases, remote code execution. Common indicators include SQL syntax in request parameters (UNION SELECT, OR 1=1, single quotes, comment sequences) and database errors surfaced to clients.
+
+Detection
+1. Inspect web/application and WAF logs for SQLi signatures in query strings, form fields and headers: "UNION SELECT", "' OR '1'='1", "--", "/*", "xp_cmdshell", "sleep(".
+2. Alert on database errors returned in HTTP responses and on anomalous query volume or unusually large result sets.
+3. Correlate suspicious requests with the authenticated user or source IP and the targeted endpoint.
+
+Containment
+1. Deploy or tune WAF rules to block known SQLi payloads against the affected endpoint.
+2. If active exploitation is confirmed, take the vulnerable endpoint offline or enable maintenance mode.
+3. Revoke or rotate database credentials used by the application if compromise is suspected.
+
+Eradication and Remediation
+1. Replace dynamic SQL with parameterized queries / prepared statements; never concatenate user input into SQL.
+2. Apply least-privilege to the application database account (no DDL, no xp_cmdshell, scoped to required tables).
+3. Add server-side input validation and output encoding; patch the vulnerable code path and add a regression test.
+
+Recovery and Post-Incident
+1. Determine what data was accessed or modified; preserve logs for forensics and meet any breach-notification obligations.
+2. Restore altered data from known-good backups if integrity was affected.
+3. Run SAST/DAST across the application to find similar injection points and add SQLi tests to CI.

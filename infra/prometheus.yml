@@ -1,0 +1,15 @@
+# Prometheus scrape config for SecureOps AI.
+# The FastAPI app (M9) exposes /metrics on port 8000; workers (M10) export too.
+# host.docker.internal lets the container reach the app running on the host.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: secureops-api
+    static_configs:
+      - targets: ["host.docker.internal:8000"]

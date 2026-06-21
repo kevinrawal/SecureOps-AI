@@ -1,0 +1,24 @@
+Ransomware Response Runbook
+
+Summary
+Ransomware encrypts files and demands payment for decryption, often after data exfiltration for double extortion. Indicators include mass file modifications with unusual extensions, ransom notes (README/HOW_TO_DECRYPT files), disabled backups or shadow copies, and spikes in CPU/disk activity. Rapid containment is critical to limit spread.
+
+Detection
+1. Alert on mass file rename/modification events, creation of ransom-note files, and deletion of Volume Shadow Copies (vssadmin delete shadows).
+2. Watch for disabled security tooling, new admin accounts, and lateral movement over SMB/RDP.
+3. Monitor for large outbound transfers preceding encryption, which indicate data exfiltration.
+
+Containment (act immediately, in parallel)
+1. Isolate affected hosts from the network (disable switch port, pull network, or quarantine via EDR) but do NOT power them off if memory forensics may be needed.
+2. Disable affected user and service accounts; block known C2 domains/IPs.
+3. Protect backups: take backup systems offline or read-only to prevent encryption of recovery data.
+
+Eradication and Remediation
+1. Identify the ransomware family and initial access vector (phishing, exposed RDP, unpatched VPN) and close it.
+2. Rebuild infected hosts from clean images rather than cleaning in place; rotate all credentials, especially domain admin and service accounts.
+3. Apply outstanding patches and enforce MFA on remote access before reconnecting systems.
+
+Recovery and Post-Incident
+1. Restore data from verified, offline backups after confirming the environment is clean.
+2. Engage legal/leadership on disclosure and law-enforcement notification; do not pay ransom without executive and legal review.
+3. Conduct a post-incident review, deploy immutable/offline backups, and tighten segmentation and EDR coverage.

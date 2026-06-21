@@ -1,0 +1,24 @@
+SSH Brute Force Response Runbook
+
+Summary
+A brute-force attack repeatedly attempts SSH logins against a host to guess valid credentials. Indicators include a high volume of failed authentication events, attempts across many usernames from one source, or distributed attempts against one account. Successful brute force can lead to full host compromise.
+
+Detection
+1. Review auth logs (/var/log/auth.log, /var/log/secure) or SIEM for repeated "Failed password" and "Invalid user" events from the same source IP or subnet.
+2. Alert when failed SSH authentications exceed a threshold (for example 20 failures in 5 minutes) from a single source.
+3. Watch for a failed-then-successful sequence from the same IP, which suggests a successful guess.
+
+Containment
+1. Block the offending source IP(s) at the host firewall (iptables/nftables) or upstream network ACL.
+2. Enable or tune fail2ban to automatically ban sources after repeated failures.
+3. For an account confirmed compromised, lock the account and terminate its active sessions (pkill -u <user>).
+
+Eradication and Remediation
+1. Disable password authentication and require SSH key-based authentication (PasswordAuthentication no in sshd_config).
+2. Disable direct root login (PermitRootLogin no) and restrict SSH to a bastion or VPN-only network path.
+3. Enforce MFA for SSH where supported, and move SSH off the public internet entirely if feasible.
+
+Recovery and Post-Incident
+1. Rotate credentials and SSH keys for any potentially affected accounts.
+2. Audit authorized_keys files for unauthorized keys and review sudo/audit logs for post-access activity.
+3. Add detection rules for credential stuffing patterns and document the source IPs as indicators of compromise.

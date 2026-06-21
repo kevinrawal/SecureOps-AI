@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# requirements.txt — exported artifact for Docker / non-UV environments.
+# Source of truth is pyproject.toml + uv.lock. Regenerate with:
+#     uv export --no-hashes --format requirements-txt > requirements.txt
+# Paid-provider SDKs (langchain-openai / langchain-anthropic) are optional
+# extras and intentionally NOT listed here. See docs/models.md.
+# ---------------------------------------------------------------------------
+langchain>=0.3.0
+langchain-groq
+langchain-huggingface
+langchain-pinecone
+langgraph>=0.2.0
+langfuse
+opentelemetry-sdk
+opentelemetry-instrumentation-fastapi
+opentelemetry-exporter-otlp-proto-grpc
+fastapi
+uvicorn[standard]
+redis[hiredis]>=5.0
+asyncpg
+pinecone-client>=3.0
+python-jose[cryptography]
+passlib[bcrypt]
+slowapi
+pydantic>=2.0
+pydantic-settings
+httpx
+structlog
+sentence-transformers
+pytest
+pytest-asyncio

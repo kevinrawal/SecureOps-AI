@@ -1,0 +1,62 @@
+[project]
+name = "secureops-ai"
+version = "0.1.0"
+description = "Multi-agent security intelligence platform (LangGraph + RAG)"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "SecureOps AI" }]
+
+# Base dependencies: run the platform on FREE providers only
+# (Groq LLM + local HuggingFace embeddings). No paid-API SDKs here.
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-groq",
+    "langchain-huggingface",
+    "langchain-pinecone",
+    "langgraph>=0.2.0",
+    "langfuse",
+    "opentelemetry-sdk",
+    "opentelemetry-instrumentation-fastapi",
+    "opentelemetry-exporter-otlp-proto-grpc",
+    "fastapi",
+    "uvicorn[standard]",
+    "redis[hiredis]>=5.0",
+    "asyncpg",
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.13",
+    "pinecone-client>=3.0",
+    "python-jose[cryptography]",
+    "passlib[bcrypt]",
+    "slowapi",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "httpx",
+    "structlog",
+    "sentence-transformers",
+]
+
+[project.optional-dependencies]
+# Paid LLM providers — install only when upgrading away from free Groq.
+# See docs/models.md for the swap procedure.
+openai = ["langchain-openai"]
+anthropic = ["langchain-anthropic"]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.uv]
+package = true
