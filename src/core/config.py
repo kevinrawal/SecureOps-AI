@@ -58,7 +58,11 @@ class Settings(BaseSettings):
     # --- Redis -------------------------------------------------------------
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_STREAM_NAME: str = "secureops:events"
+    REDIS_STREAM_DLQ: str = "secureops:dlq"
     WORKER_COUNT: int = 3
+
+    # --- NVD ---------------------------------------------------------------
+    NVD_API_KEY: str = ""          # raises rate limit from 5 to 50 req/30s
 
     # --- PostgreSQL --------------------------------------------------------
     # Individual components are the primary source of truth; docker-compose and
