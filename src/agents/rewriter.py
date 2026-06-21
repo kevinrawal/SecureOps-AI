@@ -18,6 +18,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.core.models_factory import get_llm
 from src.core.schema import ThreatState
+from src.observability.langfuse_setup import get_langfuse_handler
+from src.observability.metrics import instrument_node
 
 logger = structlog.get_logger(__name__)
 
@@ -42,11 +44,14 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@instrument_node("rewrite")
 async def rewrite_node(state: ThreatState) -> dict[str, Any]:
     """Generate a HyDE rewritten query to improve retrieval on the next attempt.
 
     Reads ``secure_event`` and ``sanitized_description``; writes
     ``rewritten_query`` and increments ``rewrite_count``.
+    Passes a Langfuse callback handler so the HyDE generation call is traced
+    in the AI observability layer.
 
     Returns:
         Partial ThreatState with updated ``rewritten_query``,
@@ -63,8 +68,13 @@ async def rewrite_node(state: ThreatState) -> dict[str, Any]:
         title=secure_event.get("title", ""),
         description=description[:1000],
     )
+
+    handler = get_langfuse_handler()
+    callbacks = [handler] if handler else []
+
     response = await llm.ainvoke(
-        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)]
+        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)],
+        config={"callbacks": callbacks},
     )
     rewritten = response.content if hasattr(response, "content") else str(response)
     new_count = rewrite_count + 1

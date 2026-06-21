@@ -1,12 +1,14 @@
 """Agent node: Pinecone runbook retrieval for the current threat event."""
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 
 import structlog
 
 from src.core.schema import ThreatState
+from src.observability.metrics import RETRIEVAL_LATENCY, instrument_node
 from src.rag.pinecone_store import query as pinecone_query
 
 logger = structlog.get_logger(__name__)
@@ -18,6 +20,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@instrument_node("retrieve")
 async def retrieve_node(state: ThreatState) -> dict[str, Any]:
     """Query Pinecone for runbooks relevant to the current event.
 
@@ -35,7 +38,11 @@ async def retrieve_node(state: ThreatState) -> dict[str, Any]:
     event_id: str = state.get("event_id", "")
 
     logger.info("retrieve_start", event_id=event_id, query=query_text[:80])
+
+    t_start = time.perf_counter()
     docs = await pinecone_query(query_text, top_k=_TOP_K)
+    RETRIEVAL_LATENCY.observe(time.perf_counter() - t_start)
+
     logger.info("retrieve_done", event_id=event_id, hits=len(docs))
 
     return {

@@ -33,6 +33,8 @@ dependencies = [
     "httpx",
     "structlog",
     "sentence-transformers",
+    "prometheus-client",
+    "python-multipart",
 ]
 
 [project.optional-dependencies]

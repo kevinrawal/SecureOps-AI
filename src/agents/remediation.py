@@ -14,6 +14,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.core.models_factory import get_llm
 from src.core.schema import ThreatState
+from src.observability.langfuse_setup import get_langfuse_handler
+from src.observability.metrics import instrument_node
 from src.security.guardrails.output_filter import OutputFilter
 
 logger = structlog.get_logger(__name__)
@@ -81,11 +83,14 @@ def _parse_steps(content: str) -> list[str]:
     return steps or [content.strip()]
 
 
+@instrument_node("remediation")
 async def remediation_node(state: ThreatState) -> dict[str, Any]:
     """Generate grounded remediation steps from retrieved runbooks.
 
     Reads: ``secure_event``, ``sanitized_description``, ``retrieved_docs``.
     Writes: ``remediation_steps``, ``severity`` (surfaced from event).
+    Passes a Langfuse callback handler so the generation call is traced in
+    the AI observability layer.
     """
     secure_event: dict[str, Any] = state.get("secure_event", {})
     description: str = state.get("sanitized_description", "")
@@ -101,8 +106,13 @@ async def remediation_node(state: ThreatState) -> dict[str, Any]:
         description=description[:1500],
         docs=_format_docs(docs),
     )
+
+    handler = get_langfuse_handler()
+    callbacks = [handler] if handler else []
+
     response = await llm.ainvoke(
-        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)]
+        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)],
+        config={"callbacks": callbacks},
     )
     content = response.content if hasattr(response, "content") else str(response)
 

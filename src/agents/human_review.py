@@ -24,6 +24,7 @@ import structlog
 from langgraph.types import interrupt
 
 from src.core.schema import Role, ThreatState
+from src.observability.metrics import instrument_node
 from src.security.rbac import assert_graph_role
 
 logger = structlog.get_logger(__name__)
@@ -33,6 +34,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@instrument_node("human_review")
 async def human_review_node(state: ThreatState) -> dict[str, Any]:
     """Suspend graph execution for human approval of remediation steps.
 

@@ -19,6 +19,7 @@ import structlog
 
 from src.core.config import settings
 from src.core.schema import ThreatState
+from src.observability.metrics import INJECTION_BLOCKED_TOTAL, instrument_node
 from src.security.guardrails.injection import InjectionCheck
 from src.security.guardrails.pii_masker import PIIMasker
 
@@ -32,6 +33,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+@instrument_node("injection_check")
 async def injection_check_node(state: ThreatState) -> dict[str, Any]:
     """Run injection check then PII masking on the event description.
 
@@ -53,6 +55,7 @@ async def injection_check_node(state: ThreatState) -> dict[str, Any]:
     blocked = not injection_result.passed
 
     if blocked:
+        INJECTION_BLOCKED_TOTAL.inc()
         logger.warning(
             "injection_blocked",
             event_id=event_id,

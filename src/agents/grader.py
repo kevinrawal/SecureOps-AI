@@ -16,6 +16,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.core.models_factory import get_llm
 from src.core.schema import ThreatState
+from src.observability.langfuse_setup import get_langfuse_handler
+from src.observability.metrics import GRADE_SCORE_HISTOGRAM, instrument_node
 
 logger = structlog.get_logger(__name__)
 
@@ -74,11 +76,14 @@ def _parse_grade_response(content: str) -> tuple[float, str]:
     return 0.0, "failed to parse grader response"
 
 
+@instrument_node("grade")
 async def grade_node(state: ThreatState) -> dict[str, Any]:
     """Score the retrieved runbooks against the event description.
 
     Uses ``get_llm(task="grading")`` (fast/cheap model). The resulting
     ``retrieval_score`` drives the conditional edge in ``graph/routers.py``.
+    Passes a Langfuse callback handler so every grading call is traced in
+    the AI observability layer.
 
     Returns:
         Partial ThreatState with ``retrieval_score`` and one ``audit_trail`` entry.
@@ -95,11 +100,17 @@ async def grade_node(state: ThreatState) -> dict[str, Any]:
         docs=_format_docs_for_grading(docs),
     )
 
+    handler = get_langfuse_handler()
+    callbacks = [handler] if handler else []
+
     response = await llm.ainvoke(
-        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)]
+        [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)],
+        config={"callbacks": callbacks},
     )
     content = response.content if hasattr(response, "content") else str(response)
     score, reasoning = _parse_grade_response(content)
+
+    GRADE_SCORE_HISTOGRAM.observe(score)
 
     logger.info(
         "grade_done",

@@ -12,6 +12,7 @@ from typing import Any
 import structlog
 
 from src.core.schema import ThreatState
+from src.observability.metrics import instrument_node
 from src.security.audit import flush_audit_trail
 
 logger = structlog.get_logger(__name__)
@@ -32,6 +33,7 @@ def _extract_sources(docs: list[dict[str, Any]]) -> list[str]:
     return sources
 
 
+@instrument_node("reporter")
 async def reporter_node(state: ThreatState) -> dict[str, Any]:
     """Compile the final incident report and flush the audit trail to PostgreSQL.
 
