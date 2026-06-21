@@ -17,6 +17,7 @@ import uuid
 from typing import Any
 
 import structlog
+from pinecone import Pinecone, ServerlessSpec
 
 from src.core.config import settings
 from src.core.models_factory import get_embeddings
@@ -31,8 +32,6 @@ _embeddings = None
 
 def _get_pinecone_client():
     """Construct a Pinecone client from configured credentials."""
-    from pinecone import Pinecone
-
     return Pinecone(api_key=settings.PINECONE_API_KEY)
 
 
@@ -56,8 +55,6 @@ async def init_pinecone():
         return _index
 
     def _init():
-        from pinecone import ServerlessSpec
-
         pc = _get_pinecone_client()
         existing = {idx["name"] for idx in pc.list_indexes()}
         if settings.PINECONE_INDEX_NAME not in existing:

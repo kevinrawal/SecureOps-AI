@@ -10,11 +10,11 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+from src.core.config import settings
+
 
 @lru_cache(maxsize=1)
 def get_engine() -> AsyncEngine:
-    from src.core.config import settings
-
     return create_async_engine(
         settings.DATABASE_URL,
         pool_size=5,

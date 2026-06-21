@@ -92,6 +92,9 @@ class Settings(BaseSettings):
     LANGFUSE_HOST: str = "http://localhost:3000"
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
 
+    # --- Security ----------------------------------------------------------
+    INJECTION_L2_ENABLED: bool = False   # enable LLM judge for near-miss inputs
+
     # --- App ---------------------------------------------------------------
     APP_ENV: Literal["development", "production"] = "development"
     LOG_LEVEL: str = "INFO"

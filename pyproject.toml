@@ -40,9 +40,16 @@ dependencies = [
 # See docs/models.md for the swap procedure.
 openai = ["langchain-openai"]
 anthropic = ["langchain-anthropic"]
+
+# dev is declared as a dependency-group below so uv auto-installs it.
+# [project.optional-dependencies].dev kept empty for pip compatibility.
+
+[dependency-groups]
+# uv installs this group by default (PEP 735). Means `uv sync` always has
+# pytest available — no `--extra dev` flag needed in CI or local dev.
 dev = [
-    "pytest",
-    "pytest-asyncio",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
 
 [build-system]
