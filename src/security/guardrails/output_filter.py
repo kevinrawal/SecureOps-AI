@@ -20,7 +20,7 @@ from typing import Any
 import structlog
 
 from src.security.guardrails.base import BaseGuardrail, GuardrailResult
-from src.security.injection import detect_l1
+from src.security.guardrails.injection import detect_l1
 
 logger = structlog.get_logger(__name__)
 

@@ -17,16 +17,16 @@ import pytest
 from langchain_core.messages import AIMessage
 
 from src.security.guardrails.base import GuardrailResult
-from src.security.injection import InjectionCheck, detect_l1
-from src.security.output_filter import OutputFilter
-from src.security.pii_masker import PIIMasker
+from src.security.guardrails.injection import InjectionCheck, detect_l1
+from src.security.guardrails.output_filter import OutputFilter
+from src.security.guardrails.pii_masker import PIIMasker
 from src.security.rbac import (
     ROLE_HIERARCHY,
     assert_graph_role,
     create_access_token,
     decode_jwt_token,
 )
-from src.security.ssrf_guard import SSRFGuard
+from src.security.guardrails.ssrf_guard import SSRFGuard
 
 
 # ===========================================================================
@@ -154,7 +154,7 @@ class TestInjectionL1:
         )
         fake_l2_response = '{"is_injection": true, "confidence": 0.95, "category": "safety_bypass", "reasoning": "Clear bypass attempt."}'
 
-        with patch("src.security.injection.get_llm") as mock_get_llm:
+        with patch("src.security.guardrails.injection.get_llm") as mock_get_llm:
             mock_llm = AsyncMock()
             mock_llm.ainvoke = AsyncMock(return_value=AIMessage(content=fake_l2_response))
             mock_get_llm.return_value = mock_llm
@@ -173,7 +173,7 @@ class TestInjectionL1:
             "Unusual spike: system credential enumeration observed; "
             "possible token harvest; review admin account logs."
         )
-        with patch("src.security.injection.get_llm") as mock_get_llm:
+        with patch("src.security.guardrails.injection.get_llm") as mock_get_llm:
             result = await checker.check({"text": suspicious})
             mock_get_llm.assert_not_called()
 
@@ -182,7 +182,7 @@ class TestInjectionL1:
     @pytest.mark.asyncio
     async def test_l2_not_called_below_soft_signal_threshold(self):
         checker = InjectionCheck(l2_enabled=True)
-        with patch("src.security.injection.get_llm") as mock_get_llm:
+        with patch("src.security.guardrails.injection.get_llm") as mock_get_llm:
             result = await checker.check({"text": "SSH brute force attack"})
             mock_get_llm.assert_not_called()
         assert result.passed

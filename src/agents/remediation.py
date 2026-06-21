@@ -14,8 +14,11 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.core.models_factory import get_llm
 from src.core.schema import ThreatState
+from src.security.guardrails.output_filter import OutputFilter
 
 logger = structlog.get_logger(__name__)
+
+_output_filter = OutputFilter()
 
 _SYSTEM_PROMPT = """\
 You are a senior security incident responder. Your job is to produce a numbered
@@ -102,6 +105,20 @@ async def remediation_node(state: ThreatState) -> dict[str, Any]:
         [SystemMessage(content=_SYSTEM_PROMPT), HumanMessage(content=user_msg)]
     )
     content = response.content if hasattr(response, "content") else str(response)
+
+    filter_result = await _output_filter.check({
+        "llm_output": content,
+        "retrieval_score": state.get("retrieval_score", 0.0),
+    })
+    if not filter_result.passed:
+        logger.warning(
+            "remediation_output_filtered",
+            event_id=event_id,
+            reason=filter_result.blocked_reason,
+            detail=filter_result.detail,
+        )
+        content = f"[Output filtered: {filter_result.blocked_reason}]"
+
     steps = _parse_steps(content)
 
     logger.info(
